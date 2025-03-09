@@ -18,7 +18,6 @@ public class FollowCam : MonoBehaviour
     void Awake(){
         S = this;
         camZ = this.transform.position.z;
-        POI = viewBothGO;
     }
 
     void FixedUpdate(){
@@ -28,9 +27,10 @@ public class FollowCam : MonoBehaviour
             if((poiRigid != null) && poiRigid.IsSleeping()){
                 POI = null;
             }
-        }
-        if(POI!= null){
-            destination = POI.transform.position;
+        
+            if (POI != null){
+                destination = POI.transform.position;
+            }
         }
         destination.x = Mathf.Max(minXY.x, destination.x);
         destination.y = Mathf.Max(minXY.y, destination.y);
