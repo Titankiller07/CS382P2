@@ -18,6 +18,7 @@ public class MissionDemolition : MonoBehaviour
     [Header("Inscribed")]
     public TextMeshProUGUI uitLevel;
     public TextMeshProUGUI uitShots;
+    public TextMeshProUGUI uitHighScore;
     public Vector3 castlePos;
     public GameObject[] castles;
 
@@ -28,6 +29,8 @@ public class MissionDemolition : MonoBehaviour
     public GameObject castle;
     public GameMode mode = GameMode.idle;
     public string showing = "Show Slingshot";
+
+    private Dictionary<int, int> levelHighScores;
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
@@ -36,6 +39,8 @@ public class MissionDemolition : MonoBehaviour
         level = 0;
         shotsTaken = 0;
         levelMax = castles.Length;
+        levelHighScores = new Dictionary<int, int>();
+        LoadHighScores();
         StartLevel();
     }
 
@@ -51,6 +56,8 @@ public class MissionDemolition : MonoBehaviour
 
         Goal.goalMet = false;
 
+        shotsTaken = 0;
+
         UpdateGUI();
 
         mode = GameMode.playing;
@@ -60,6 +67,13 @@ public class MissionDemolition : MonoBehaviour
     void UpdateGUI(){
         uitLevel.text = "Level: " + (level + 1) + " of " + levelMax;
         uitShots.text = "Shots Taken: " + shotsTaken;
+
+        if(levelHighScores.ContainsKey(level)){
+            uitHighScore.text = "High Score: " + levelHighScores[level];
+        }
+        else{
+            uitHighScore.text = "High Score: ";
+        }
     }
 
     // Update is called once per frame
@@ -70,10 +84,28 @@ public class MissionDemolition : MonoBehaviour
         if((mode == GameMode.playing) && Goal.goalMet){
             mode = GameMode.levelEnd;
             FollowCam.SWITCH_VIEW(FollowCam.eView.both);
+            UpdateHighScore();
             Invoke("NextLevel", 2f);
         }   
     }
-
+    void UpdateHighScore()
+    {
+        // Check if the current level has a high score
+        if (levelHighScores.ContainsKey(level))
+        {
+            // Update the high score if the current shots are less than the stored high score
+            if (shotsTaken < levelHighScores[level])
+            {
+                levelHighScores[level] = shotsTaken;
+            }
+        }
+        else
+        {
+            // If no high score exists for this level, add the current shots as the high score
+            levelHighScores.Add(level, shotsTaken);
+        }
+        SaveHighScores();
+    }
     void NextLevel(){
         level++;
         if(level == levelMax){
@@ -88,5 +120,23 @@ public class MissionDemolition : MonoBehaviour
 
     static public GameObject GET_CASTLE(){
         return S.castle;
-    }  
+    } 
+
+    void SaveHighScores(){
+        foreach (var entry in levelHighScores)
+        {
+            PlayerPrefs.SetInt("HighScore" + entry.Key, entry.Value);
+        }
+        PlayerPrefs.Save();
+    }
+
+    void LoadHighScores(){
+        for (int i = 0; i < levelMax; i++)
+        {
+            if (PlayerPrefs.HasKey("HighScore" + i))
+            {
+                 levelHighScores[i] = PlayerPrefs.GetInt("HighScore" + i);
+            }
+        }
+    }
 }
